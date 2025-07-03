@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Préstamos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        dark: '#1F2937',
+                        light: '#F9FAFB'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card {
+            border-left: 4px solid;
+        }
+
+        .form-section {
+            transition: all 0.3s ease;
+        }
+
+        .form-section.hidden {
+            display: none;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.4s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .notification.error {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-hand-holding-usd text-3xl text-primary"></i>
+                <h1 class="text-2xl font-bold text-gray-800">Préstamos Gabriel</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <i class="fas fa-bell text-xl text-gray-600"></i>
+                    <span
+                        class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10"></div>
+                    <span class="font-medium">Admin</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card bg-white rounded-lg p-6 border-l-primary">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Préstamos Activos</p>
+                        <h3 class="text-2xl font-bold mt-1">24</h3>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <i class="fas fa-file-invoice-dollar text-xl text-primary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card bg-white rounded-lg p-6 border-l-secondary">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Clientes Registrados</p>
+                        <h3 class="text-2xl font-bold mt-1">48</h3>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <i class="fas fa-users text-xl text-secondary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card bg-white rounded-lg p-6 border-l-accent">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Pendientes de Pago</p>
+                        <h3 class="text-2xl font-bold mt-1">$12,450</h3>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-full">
+                        <i class="fas fa-money-bill-wave text-xl text-accent"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card bg-white rounded-lg p-6 border-l-yellow-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500 text-sm">Préstamos en Mora</p>
+                        <h3 class="text-2xl font-bold mt-1">5</h3>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full">
+                        <i class="fas fa-exclamation-triangle text-xl text-yellow-500"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-lg shadow-md mb-8">
+            <div class="flex overflow-x-auto">
+                <button data-tab="clientes"
+                    class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-primary border-b-2 border-transparent hover:border-primary transition-all active">Clientes</button>
+                <button data-tab="prestamos"
+                    class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-primary border-b-2 border-transparent hover:border-primary transition-all">Préstamos</button>
+                <button data-tab="pagos"
+                    class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-primary border-b-2 border-transparent hover:border-primary transition-all">Pagos</button>
+                <button data-tab="garantias"
+                    class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-primary border-b-2 border-transparent hover:border-primary transition-all">Garantías</button>
+                <button data-tab="reportes"
+                    class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-primary border-b-2 border-transparent hover:border-primary transition-all">Reportes</button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-content">
+            <!-- Clientes Section -->
+            <div id="clientes" class="tab-content active">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold mb-4">Registro de Clientes</h2>
+                    <form id="cliente-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="nombre">Nombre</label>
+                            <input type="text" id="nombre" name="nombre"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="apellido">Apellido</label>
+                            <input type="text" id="apellido" name="apellido"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="telefono">Teléfono</label>
+                            <input type="tel" id="telefono" name="telefono"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="correo">Correo Electrónico</label>
+                            <input type="email" id="correo" name="correo"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 mb-2" for="direccion">Dirección</label>
+                            <textarea id="direccion" name="direccion"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                rows="3"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="identificacion">Identificación</label>
+                            <div class="flex items-center">
+                                <input type="file" id="identificacion" name="identificacion" class="hidden"
+                                    accept="image/*, .pdf">
+                                <input type="text" id="file-name"
+                                    class="w-full px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="Seleccionar archivo..." disabled>
+                                <button type="button" onclick="document.getElementById('identificacion').click()"
+                                    class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-r-lg">
+                                    <i class="fas fa-upload"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">Formatos aceptados: JPG, PNG, PDF</p>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end mt-4">
+                            <button type="reset"
+                                class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 mr-3 btn-secondary">
+                                <i class="fas fa-eraser mr-2"></i>Limpiar
+                            </button>
+                            <button type="submit"
+                                class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 btn-primary">
+                                <i class="fas fa-save mr-2"></i>Guardar Cliente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <!--
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Listado de Clientes</h2>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <input type="text" placeholder="Buscar cliente..."
+                                    class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                            <button class="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        ID</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Cliente</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Contacto</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Registro</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Préstamos</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">CL-001</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10 mr-3">
+                                            </div>
+                                            <div>
+                                                <div class="font-medium">María Rodríguez</div>
+                                                <div class="text-gray-500">mrodriguez@mail.com</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div>809-555-1234</div>
+                                        <div class="text-gray-500">Santo Domingo</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        15/06/2024
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">3
+                                            activos</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button class="text-blue-500 hover:text-blue-700 mr-3"><i
+                                                class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i
+                                                class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">CL-002</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10 mr-3">
+                                            </div>
+                                            <div>
+                                                <div class="font-medium">Carlos Pérez</div>
+                                                <div class="text-gray-500">cperez@mail.com</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div>829-555-5678</div>
+                                        <div class="text-gray-500">Santiago</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        22/05/2024
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">1
+                                            activo</span>
+                                        <span
+                                            class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs ml-1">1
+                                            en mora</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button class="text-blue-500 hover:text-blue-700 mr-3"><i
+                                                class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i
+                                                class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">CL-003</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10 mr-3">
+                                            </div>
+                                            <div>
+                                                <div class="font-medium">Ana Martínez</div>
+                                                <div class="text-gray-500">amartinez@mail.com</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div>849-555-9012</div>
+                                        <div class="text-gray-500">La Romana</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        10/07/2024
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">2
+                                            activos</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button class="text-blue-500 hover:text-blue-700 mr-3"><i
+                                                class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i
+                                                class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-6">
+                        <div class="text-gray-600">Mostrando 3 de 48 clientes</div>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg"><i
+                                    class="fas fa-chevron-left"></i></button>
+                            <button class="bg-primary text-white p-2 rounded-lg">1</button>
+                            <button class="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg">2</button>
+                            <button class="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg">3</button>
+                            <button class="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg"><i
+                                    class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+                -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Listado de Clientes</h2>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <input type="text" placeholder="Buscar cliente..."
+                                    class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary search-input">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                            <button class="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        ID</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Cliente</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Contacto</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Registro</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Préstamos</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr id="loader">
+                                    <td colspan="6" class="text-center py-8">
+                                        <div class="flex justify-center">
+                                            <div
+                                                class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12">
+                                            </div>
+                                        </div>
+                                        <p class="mt-2 text-gray-600">Cargando clientes...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-6">
+                        <div class="text-gray-600 pagination-info">Mostrando 0 de 0 clientes</div>
+                        <div class="flex space-x-2 pagination-controls">
+                            <!-- Los controles de paginación se generarán aquí dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prestamos Section -->
+            <div id="prestamos" class="tab-content">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold mb-4">Registro de Préstamos</h2>
+                    <form id="prestamo-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="cliente">Cliente</label>
+                            <select id="cliente-select" name="cliente"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="monto">Monto del Préstamo (RD$)</label>
+                            <input type="number" id="monto" name="monto"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                min="1000" step="500" placeholder="10,000" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="tasa">Tasa de Interés (%)</label>
+                            <input type="number" id="tasa" name="tasa"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                min="1" max="100" step="0.5" placeholder="12.5" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="plazo">Número de pagos</label>
+                            <input type="number" id="plazo" name="plazo"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                min="1" max="60" placeholder="8" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="frecuencia">Frecuencia de Pago</label>
+                            <select id="frecuencia-select" name="frecuencia"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="metodo">Método de Pago</label>
+                            <select id="metodo" name="metodo"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                                <option value="">Seleccionar método</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia Bancaria</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="fecha_solicitud">Fecha de Solicitud</label>
+                            <input type="date" id="fecha_solicitud" name="fecha_solicitud"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="fecha_aprobacion">Fecha de Aprobación</label>
+                            <input type="date" id="fecha_aprobacion" name="fecha_aprobacion"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 mb-2" for="observaciones">Observaciones</label>
+                            <textarea id="observaciones" name="observaciones"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                rows="2"></textarea>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end mt-4">
+                            <button type="reset"
+                                class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 mr-3">Limpiar</button>
+                            <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">
+                                <i class="fas fa-file-contract mr-2"></i>Registrar Préstamo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Préstamos Registrados</h2>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <input type="text" placeholder="Buscar préstamo..."
+                                    class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                            <select class="bg-gray-100 border rounded-lg px-3">
+                                <option>Todos los estados</option>
+                                <option>Activo</option>
+                                <option>Cerrado</option>
+                                <option>En mora</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        ID</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Cliente</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Monto</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Tasa</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Pagos</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Estado</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">PR-001</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">María Rodríguez</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">RD$ 50,000</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">12.5%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">12 meses</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Activo</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button class="text-blue-500 hover:text-blue-700 mr-3"><i
+                                                class="fas fa-eye"></i></button>
+                                        <button class="text-yellow-500 hover:text-yellow-700 mr-3"><i
+                                                class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i
+                                                class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">PR-002</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Carlos Pérez</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">RD$ 25,000</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">15.0%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">6 meses</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">En
+                                            mora</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button class="text-blue-500 hover:text-blue-700 mr-3"><i
+                                                class="fas fa-eye"></i></button>
+                                        <button class="text-yellow-500 hover:text-yellow-700 mr-3"><i
+                                                class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i
+                                                class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">PR-003</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Ana Martínez</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">RD$ 75,000</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">10.0%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">24 meses</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Activo</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button class="text-blue-500 hover:text-blue-700 mr-3"><i
+                                                class="fas fa-eye"></i></button>
+                                        <button class="text-yellow-500 hover:text-yellow-700 mr-3"><i
+                                                class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i
+                                                class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagos Section -->
+            <div id="pagos" class="tab-content">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold mb-4">Registro de Pagos</h2>
+                    <form id="pago-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="prestamo_pago">Préstamo</label>
+                            <select id="prestamo_pago" name="prestamo_pago"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                                <option value="">Seleccionar préstamo</option>
+                                <option value="1">PR-001 - María Rodríguez (RD$ 50,000)</option>
+                                <option value="2">PR-002 - Carlos Pérez (RD$ 25,000)</option>
+                                <option value="3">PR-003 - Ana Martínez (RD$ 75,000)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="monto_pago">Monto del Pago (RD$)</label>
+                            <input type="number" id="monto_pago" name="monto_pago"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                min="100" step="100" placeholder="5,000" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="fecha_pago">Fecha de Pago</label>
+                            <input type="date" id="fecha_pago" name="fecha_pago"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="comprobante">Comprobante</label>
+                            <div class="flex items-center">
+                                <input type="file" id="comprobante" name="comprobante" class="hidden"
+                                    accept="image/*, .pdf">
+                                <input type="text"
+                                    class="w-full px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="Seleccionar archivo..." disabled>
+                                <button type="button" onclick="document.getElementById('comprobante').click()"
+                                    class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-r-lg">
+                                    <i class="fas fa-upload"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-600">Monto pendiente:</span>
+                                    <span class="font-medium">RD$ 42,500</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Próximo pago:</span>
+                                    <span class="font-medium">15/08/2024 - RD$ 4,687.50</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end mt-4">
+                            <button type="reset"
+                                class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 mr-3">Limpiar</button>
+                            <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">
+                                <i class="fas fa-money-bill-wave mr-2"></i>Registrar Pago
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Historial de Pagos</h2>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <input type="text" placeholder="Buscar pago..."
+                                    class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                            <select class="bg-gray-100 border rounded-lg px-3">
+                                <option>Todos los préstamos</option>
+                                <option>PR-001</option>
+                                <option>PR-002</option>
+                                <option>PR-003</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        ID</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Préstamo</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Fecha</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Monto</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Comprobante</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Saldo Restante</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">PA-001</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">PR-001 (María Rodríguez)</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">15/07/2024</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">RD$ 4,687.50</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <a href="#" class="text-blue-500 hover:underline">comprobante_001.pdf</a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">RD$ 45,312.50</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">PA-002</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">PR-003 (Ana Martínez)</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">10/07/2024</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">RD$ 3,500.00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <a href="#" class="text-blue-500 hover:underline">comprobante_002.jpg</a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">RD$ 71,500.00</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">PA-003</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">PR-001 (María Rodríguez)</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">30/06/2024</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">RD$ 4,687.50</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <a href="#" class="text-blue-500 hover:underline">comprobante_003.pdf</a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">RD$ 50,000.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Garantías Section -->
+            <div id="garantias" class="tab-content">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold mb-4">Registro de Garantías</h2>
+                    <form id="garantia-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="prestamo_garantia">Préstamo</label>
+                            <select id="prestamo_garantia" name="prestamo_garantia"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                                <option value="">Seleccionar préstamo</option>
+                                <option value="1">PR-001 - María Rodríguez (RD$ 50,000)</option>
+                                <option value="2">PR-002 - Carlos Pérez (RD$ 25,000)</option>
+                                <option value="3">PR-003 - Ana Martínez (RD$ 75,000)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="tipo_garantia">Tipo de Garantía</label>
+                            <select id="tipo_garantia" name="tipo_garantia"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="vehiculo">Vehículo</option>
+                                <option value="propiedad">Propiedad</option>
+                                <option value="electrodomestico">Electrodoméstico</option>
+                                <option value="joyeria">Joyería</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="valor">Valor Estimado (RD$)</label>
+                            <input type="number" id="valor" name="valor"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                min="1000" step="1000" placeholder="25,000" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="documento_garantia">Documento de
+                                Garantía</label>
+                            <div class="flex items-center">
+                                <input type="file" id="documento_garantia" name="documento_garantia" class="hidden"
+                                    accept="image/*, .pdf">
+                                <input type="text"
+                                    class="w-full px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="Seleccionar archivo..." disabled>
+                                <button type="button" onclick="document.getElementById('documento_garantia').click()"
+                                    class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-r-lg">
+                                    <i class="fas fa-upload"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 mb-2" for="descripcion_garantia">Descripción</label>
+                            <textarea id="descripcion_garantia" name="descripcion_garantia"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                rows="3" placeholder="Detalles de la garantía..."></textarea>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end mt-4">
+                            <button type="reset"
+                                class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 mr-3">Limpiar</button>
+                            <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">
+                                <i class="fas fa-file-contract mr-2"></i>Registrar Garantía
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">Garantías Registradas</h2>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <input type="text" placeholder="Buscar garantía..."
+                                    class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                            <select class="bg-gray-100 border rounded-lg px-3">
+                                <option>Todos los tipos</option>
+                                <option>Vehículo</option>
+                                <option>Propiedad</option>
+                                <option>Electrodoméstico</option>
+                                <option>Joyería</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="card bg-white rounded-lg shadow-md overflow-hidden">
+                            <div class="bg-gray-200 border-2 border-dashed w-full h-48"></div>
+                            <div class="p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-bold text-lg">Toyota Corolla 2020</h3>
+                                        <p class="text-gray-600">Préstamo: PR-001</p>
+                                    </div>
+                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Vehículo</span>
+                                </div>
+                                <div class="mt-4">
+                                    <p class="text-gray-700"><span class="font-medium">Valor:</span> RD$ 650,000</p>
+                                    <p class="text-gray-700 mt-1"><span class="font-medium">Descripción:</span> Vehículo
+                                        en perfecto estado, 25,000 km</p>
+                                </div>
+                                <div class="mt-4 flex justify-end">
+                                    <button class="text-blue-500 hover:text-blue-700 mr-3"><i
+                                            class="fas fa-eye"></i></button>
+                                    <button class="text-yellow-500 hover:text-yellow-700 mr-3"><i
+                                            class="fas fa-edit"></i></button>
+                                    <button class="text-red-500 hover:text-red-700"><i
+                                            class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card bg-white rounded-lg shadow-md overflow-hidden">
+                            <div class="bg-gray-200 border-2 border-dashed w-full h-48"></div>
+                            <div class="p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-bold text-lg">Apartamento en Bella Vista</h3>
+                                        <p class="text-gray-600">Préstamo: PR-003</p>
+                                    </div>
+                                    <span
+                                        class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Propiedad</span>
+                                </div>
+                                <div class="mt-4">
+                                    <p class="text-gray-700"><span class="font-medium">Valor:</span> RD$ 3,500,000</p>
+                                    <p class="text-gray-700 mt-1"><span class="font-medium">Descripción:</span>
+                                        Apartamento de 2 habitaciones, 120m²</p>
+                                </div>
+                                <div class="mt-4 flex justify-end">
+                                    <button class="text-blue-500 hover:text-blue-700 mr-3"><i
+                                            class="fas fa-eye"></i></button>
+                                    <button class="text-yellow-500 hover:text-yellow-700 mr-3"><i
+                                            class="fas fa-edit"></i></button>
+                                    <button class="text-red-500 hover:text-red-700"><i
+                                            class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card bg-white rounded-lg shadow-md overflow-hidden">
+                            <div class="bg-gray-200 border-2 border-dashed w-full h-48"></div>
+                            <div class="p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-bold text-lg">Juego de joyas de oro</h3>
+                                        <p class="text-gray-600">Préstamo: PR-002</p>
+                                    </div>
+                                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">Joyería</span>
+                                </div>
+                                <div class="mt-4">
+                                    <p class="text-gray-700"><span class="font-medium">Valor:</span> RD$ 75,000</p>
+                                    <p class="text-gray-700 mt-1"><span class="font-medium">Descripción:</span> Cadena,
+                                        pulsera y aretes de 18k</p>
+                                </div>
+                                <div class="mt-4 flex justify-end">
+                                    <button class="text-blue-500 hover:text-blue-700 mr-3"><i
+                                            class="fas fa-eye"></i></button>
+                                    <button class="text-yellow-500 hover:text-yellow-700 mr-3"><i
+                                            class="fas fa-edit"></i></button>
+                                    <button class="text-red-500 hover:text-red-700"><i
+                                            class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Tab navigation functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and tab contents
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active', 'border-primary', 'text-primary'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                // Add active class to clicked button
+                button.classList.add('active', 'border-primary', 'text-primary');
+
+                // Show corresponding tab content
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+
+        // Set today as default for date inputs
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha_solicitud').value = today;
+        document.getElementById('fecha_pago').value = today;
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>
